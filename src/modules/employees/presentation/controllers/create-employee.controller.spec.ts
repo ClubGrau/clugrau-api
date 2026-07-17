@@ -127,4 +127,20 @@ describe('CreateEmployeeController', () => {
     });
     expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
   });
+
+  it('should return 201 if employee is created successfully', async () => {
+    const { sut } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: 'P@ssword123',
+      passwordConfirmation: 'P@ssword123',
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toEqual({
+      data: { id: 'valid_employee_id' },
+    });
+  });
 });
