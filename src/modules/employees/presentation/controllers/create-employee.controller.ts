@@ -24,32 +24,47 @@ export class CreateEmployeeController extends BaseController<
       HttpErrorBody | HttpSuccessBody<EmployeeModel.CreateEmployeeResultDto>
     >
   > {
-    const requiredFields = [
-      'name',
-      'email',
-      'password',
-      'passwordConfirmation',
-    ];
+    try {
+      const requiredFields = [
+        'name',
+        'email',
+        'password',
+        'passwordConfirmation',
+      ];
 
-    const missingField = this.validationRequiredFields(request, requiredFields);
-    if (missingField) {
-      return badRequest(new MissingParamError(missingField));
+      const missingField = this.validationRequiredFields(
+        request,
+        requiredFields,
+      );
+      if (missingField) {
+        return badRequest(new MissingParamError(missingField));
+      }
+
+      await this.createEmployeeUsecase.execute({
+        name: request.name,
+        email: request.email,
+        role: request.role,
+        password: request.password,
+        passwordConfirmation: request.passwordConfirmation,
+      });
+
+      // TODO: call CreateEmployeeUsecase and return { data: result }
+      return {
+        statusCode: 200,
+        body: {
+          data: { id: '' },
+        },
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          statusCode: 500,
+          body: {
+            error: error.message,
+          },
+        };
+      }
+      throw error;
     }
-
-    await this.createEmployeeUsecase.execute({
-      name: request.name,
-      email: request.email,
-      role: request.role,
-      password: request.password,
-      passwordConfirmation: request.passwordConfirmation,
-    });
-
-    // TODO: call CreateEmployeeUsecase and return { data: result }
-    return {
-      statusCode: 200,
-      body: {
-        data: { id: '' },
-      },
-    };
   }
 }
