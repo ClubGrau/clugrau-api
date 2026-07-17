@@ -1,8 +1,13 @@
 import { Employee } from '@modules/employees/domain/entities/Employee';
 import { PasswordNotMatchError } from '@modules/employees/domain/errors/employee.errors';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
+import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
 
 export class CreateEmployeeUsecase {
+  constructor(
+    private readonly employeePoliciesService: EmployeePoliciesService,
+  ) {}
+
   async execute(params: EmployeeModel.CreateEmployeeDto): Promise<void> {
     const { password, passwordConfirmation } = params;
 
@@ -10,12 +15,16 @@ export class CreateEmployeeUsecase {
       throw new PasswordNotMatchError();
     }
 
-    Employee.create({
+    const candidateEmployee = Employee.create({
       name: params.name,
       email: params.email,
       role: params.role,
       nif: params.nif,
       password: params.password,
-    });
+    }).toJSON();
+
+    await this.employeePoliciesService.ensureEmailIsAvailable(
+      candidateEmployee.email,
+    );
   }
 }
