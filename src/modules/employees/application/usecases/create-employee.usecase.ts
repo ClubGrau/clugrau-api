@@ -33,6 +33,8 @@ export class CreateEmployeeUsecase {
       candidateEmployee.email,
     );
 
+    // TODO - check phone validation before creating employee (this resource should be injected as a dependency)
+
     const encryptedPassword = await this.encrypter.encrypt(password);
     const employeeToCreate: EmployeeModel.toCreate = {
       ...candidateEmployee,
