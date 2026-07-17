@@ -1,5 +1,9 @@
-import { UniqueEntityId } from '@shared/domain/value-object/id/unique-entity-id.vo';
 import { Email, Name, Nif, Password } from '@shared/domain/value-object';
+import {
+  InvalidEmailError,
+  InvalidNameError,
+  InvalidPasswordError,
+} from '@shared/domain/value-object';
 import { EmployeeModel } from '../models/employee.model';
 import {
   EmployeeAlreadyActiveError,
@@ -7,14 +11,30 @@ import {
   InvalidEmployeeRoleError,
 } from '../errors/employee.errors';
 import { Employee } from './Employee';
+import type { ReconstituteEmployeeProps } from './Employee';
 
 const HEX_24 = /^[0-9a-f]{24}$/;
 
 const makeValidProps = () => ({
-  name: Name.create('John Doe'),
-  email: Email.create('john@example.com'),
-  password: Password.create('Str0ng!Pass'),
+  name: 'John Doe',
+  email: 'john@example.com',
+  password: 'Str0ng!Pass',
   role: EmployeeModel.Role.EMPLOYEE,
+});
+
+const makeSnapshot = (
+  overrides: Partial<ReconstituteEmployeeProps> = {},
+): ReconstituteEmployeeProps => ({
+  id: '507f1f77bcf86cd799439011',
+  name: Name.create('Jane Doe'),
+  email: Email.create('jane@example.com'),
+  password: Password.fromHash('$2b$10$hashedvalue'),
+  nif: null,
+  role: EmployeeModel.Role.MANAGER,
+  isActive: true,
+  createdAt: new Date(),
+  deactivateAt: null,
+  ...overrides,
 });
 
 describe('Employee (entity)', () => {
@@ -44,12 +64,6 @@ describe('Employee (entity)', () => {
       expect(typeof json.password).toBe('string');
     });
 
-    it('should use the provided id when given', () => {
-      const id = new UniqueEntityId('507f1f77bcf86cd799439011');
-      const employee = Employee.create({ ...makeValidProps(), id });
-      expect(employee.id).toBe('507f1f77bcf86cd799439011');
-    });
-
     it('should generate unique ids when none is provided', () => {
       const a = Employee.create(makeValidProps());
       const b = Employee.create(makeValidProps());
@@ -59,7 +73,7 @@ describe('Employee (entity)', () => {
     it('should accept an optional NIF', () => {
       const employee = Employee.create({
         ...makeValidProps(),
-        nif: Nif.create('123456789'),
+        nif: 123456789,
       });
       expect(employee.toJSON().nif).toBe('123456789');
     });
@@ -72,6 +86,24 @@ describe('Employee (entity)', () => {
         }),
       ).toThrow(InvalidEmployeeRoleError);
     });
+
+    it('should throw for an invalid name', () => {
+      expect(() => Employee.create({ ...makeValidProps(), name: 'A' })).toThrow(
+        InvalidNameError,
+      );
+    });
+
+    it('should throw for an invalid email', () => {
+      expect(() =>
+        Employee.create({ ...makeValidProps(), email: 'not-an-email' }),
+      ).toThrow(InvalidEmailError);
+    });
+
+    it('should throw for a weak password', () => {
+      expect(() =>
+        Employee.create({ ...makeValidProps(), password: 'weak' }),
+      ).toThrow(InvalidPasswordError);
+    });
   });
 
   describe('reconstitute', () => {
@@ -79,17 +111,14 @@ describe('Employee (entity)', () => {
       const createdAt = new Date('2024-01-01T00:00:00.000Z');
       const deactivateAt = new Date('2024-06-01T00:00:00.000Z');
 
-      const employee = Employee.reconstitute({
-        id: '507f1f77bcf86cd799439011',
-        name: Name.create('Jane Doe'),
-        email: Email.create('jane@example.com'),
-        password: Password.fromHash('$2b$10$hashedvalue'),
-        nif: Nif.create('123456789'),
-        role: EmployeeModel.Role.MANAGER,
-        isActive: false,
-        createdAt,
-        deactivateAt,
-      });
+      const employee = Employee.reconstitute(
+        makeSnapshot({
+          nif: Nif.create('123456789'),
+          isActive: false,
+          createdAt,
+          deactivateAt,
+        }),
+      );
 
       const json = employee.toJSON();
       expect(employee.id).toBe('507f1f77bcf86cd799439011');
@@ -188,12 +217,8 @@ describe('Employee (entity)', () => {
 
   describe('identity', () => {
     it('should consider two employees with the same id equal', () => {
-      const id = new UniqueEntityId('507f1f77bcf86cd799439011');
-      const a = Employee.create({ ...makeValidProps(), id });
-      const b = Employee.create({
-        ...makeValidProps(),
-        id: new UniqueEntityId('507f1f77bcf86cd799439011'),
-      });
+      const a = Employee.reconstitute(makeSnapshot());
+      const b = Employee.reconstitute(makeSnapshot());
       expect(a.equals(b)).toBe(true);
     });
 

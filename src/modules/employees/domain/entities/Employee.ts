@@ -21,12 +21,14 @@ interface EmployeeProps {
 
 /** Input required to create a brand new employee. */
 export interface CreateEmployeeProps {
-  id?: UniqueEntityId;
-  name: Name;
-  email: Email;
-  password: Password;
+  name: string;
+  email: string;
+  password: string;
+  nif?: number | null;
   role: EmployeeModel.Role;
-  nif?: Nif | null;
+  isActive?: boolean;
+  createdAt?: Date;
+  deactivateAt?: Date | null;
 }
 
 /** Full snapshot used to rebuild an employee from persistence. */
@@ -52,19 +54,16 @@ export class Employee extends Entity<EmployeeProps> {
       throw new InvalidEmployeeRoleError(`Invalid role: "${input.role}"`);
     }
 
-    return new Employee(
-      {
-        name: input.name,
-        email: input.email,
-        password: input.password,
-        nif: input.nif ?? null,
-        role: input.role,
-        isActive: true,
-        createdAt: new Date(),
-        deactivateAt: null,
-      },
-      input.id,
-    );
+    return new Employee({
+      name: Name.create(input.name),
+      email: Email.create(input.email),
+      password: Password.create(input.password),
+      nif: input.nif ? Nif.create(input.nif.toString()) : null,
+      role: input.role,
+      isActive: true,
+      createdAt: new Date(),
+      deactivateAt: null,
+    });
   }
 
   static reconstitute(input: ReconstituteEmployeeProps): Employee {
