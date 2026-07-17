@@ -1,3 +1,5 @@
+import { Employee } from '../entities/Employee';
+
 export namespace EmployeeModel {
   export enum Role {
     ADMIN = 'ADMIN',
@@ -5,7 +7,7 @@ export namespace EmployeeModel {
     EMPLOYEE = 'EMPLOYEE',
   }
 
-  export const ROLES: readonly Role[] = Object.freeze(Object.values(Role));
+  export type toCreate = ReturnType<Employee['toJSON']>;
 
   export interface CreateEmployeeDto {
     name: string;
@@ -15,6 +17,8 @@ export namespace EmployeeModel {
     password: string;
     passwordConfirmation: string;
   }
+
+  export const ROLES: readonly Role[] = Object.freeze(Object.values(Role));
 
   export function isRole(value: unknown): value is Role {
     return typeof value === 'string' && (ROLES as string[]).includes(value);

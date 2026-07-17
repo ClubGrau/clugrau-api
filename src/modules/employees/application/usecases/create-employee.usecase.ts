@@ -3,11 +3,13 @@ import { PasswordNotMatchError } from '@modules/employees/domain/errors/employee
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
 import { EncrypterPort } from '../ports/outbound/encrypter.port';
+import { CreateEmployeeRepositoryPort } from '../ports/outbound/create-employee-repository.port';
 
 export class CreateEmployeeUsecase {
   constructor(
     private readonly employeePoliciesService: EmployeePoliciesService,
     private readonly encrypter: EncrypterPort,
+    private readonly createEmployeeRepository: CreateEmployeeRepositoryPort,
   ) {}
 
   async execute(params: EmployeeModel.CreateEmployeeDto): Promise<void> {
@@ -29,6 +31,11 @@ export class CreateEmployeeUsecase {
       candidateEmployee.email,
     );
 
-    await this.encrypter.encrypt(password);
+    const encryptedPassword = await this.encrypter.encrypt(password);
+    const employeeToCreate: EmployeeModel.toCreate = {
+      ...candidateEmployee,
+      password: encryptedPassword,
+    };
+    await this.createEmployeeRepository.create(employeeToCreate);
   }
 }
