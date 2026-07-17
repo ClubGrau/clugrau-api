@@ -31,4 +31,41 @@ describe('EmployeeMongooseRepository', () => {
     expect(sut).toBeDefined();
     expect(sut).toBeInstanceOf(EmployeeMongooseRepository);
   });
+
+  it('should findOne employee by email with a valid Mongoose query', async () => {
+    const { sut, employeeModelMock } = makeSut();
+
+    const employeeId = new mongoose.Types.ObjectId().toHexString();
+    const email = 'john.doe@example.com';
+
+    const findOneSpy = jest
+      .spyOn(employeeModelMock, 'findOne')
+      .mockReturnValueOnce({
+        lean: jest.fn().mockResolvedValueOnce({
+          _id: employeeId,
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          password: 'hashed_password',
+          role: EmployeeModel.Role.ADMIN,
+          nif: 123456789,
+          isActive: true,
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          deactivateAt: null,
+        }),
+      });
+
+    const result = await sut.findByEmail(email);
+    expect(findOneSpy).toHaveBeenCalledWith({ email });
+    expect(result).toEqual({
+      id: employeeId,
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      password: 'hashed_password',
+      role: EmployeeModel.Role.ADMIN,
+      nif: '123456789',
+      isActive: true,
+      createdAt: new Date('2024-01-01T00:00:00Z'),
+      deactivateAt: null,
+    });
+  });
 });

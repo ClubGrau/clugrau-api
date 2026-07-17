@@ -19,13 +19,17 @@ const makeSut = (): SutTypes => {
   return { sut, findEmployeeByEmailStub };
 };
 
-const makeEmployee = (): Employee =>
-  Employee.create({
+const makeEmployeeSnapshot = (
+  overrides: Partial<EmployeeModel.toCreate> = {},
+): EmployeeModel.toCreate => ({
+  ...Employee.create({
     name: 'John Doe',
     email: 'john.doe@example.com',
     password: 'P@ssword123',
     role: EmployeeModel.Role.EMPLOYEE,
-  });
+  }).toJSON(),
+  ...overrides,
+});
 
 type SutTypes = {
   sut: EmployeePoliciesService;
@@ -62,10 +66,9 @@ describe('EmployeePoliciesService', () => {
 
   it('should throw EmployeeAlreadyExistsError when an active employee exists', async () => {
     const { sut, findEmployeeByEmailStub } = makeSut();
-    const activeEmployee = makeEmployee();
     jest
       .spyOn(findEmployeeByEmailStub, 'findByEmail')
-      .mockResolvedValueOnce(activeEmployee);
+      .mockResolvedValueOnce(makeEmployeeSnapshot({ isActive: true }));
 
     const result = sut.ensureEmailIsAvailable('john.doe@example.com');
 
@@ -75,11 +78,9 @@ describe('EmployeePoliciesService', () => {
 
   it('should throw EmployeeInactiveError when an inactive employee exists', async () => {
     const { sut, findEmployeeByEmailStub } = makeSut();
-    const inactiveEmployee = makeEmployee();
-    inactiveEmployee.deactivate();
     jest
       .spyOn(findEmployeeByEmailStub, 'findByEmail')
-      .mockResolvedValueOnce(inactiveEmployee);
+      .mockResolvedValueOnce(makeEmployeeSnapshot({ isActive: false }));
 
     const result = sut.ensureEmailIsAvailable('john.doe@example.com');
 
