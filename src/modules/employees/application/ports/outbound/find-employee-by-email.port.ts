@@ -1,5 +1,4 @@
-import { Employee } from '@modules/employees/domain/entities/Employee';
-
+import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 export interface FindEmployeeByEmailPort {
-  findByEmail(email: string): Promise<Employee | null>;
+  findByEmail(email: string): Promise<EmployeeModel.toCreate | null>;
 }
