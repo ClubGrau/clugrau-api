@@ -3,8 +3,10 @@ import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import {
   badRequest,
+  created,
   HttpErrorBody,
   HttpSuccessBody,
+  serverError,
 } from '@shared/presentation/helpers/http-helper';
 import { BaseController } from '@shared/presentation/protocols/base-controller';
 import { HttpResponse } from '@shared/presentation/protocols/http-response';
@@ -48,22 +50,9 @@ export class CreateEmployeeController extends BaseController<
         passwordConfirmation: request.passwordConfirmation,
       });
 
-      return {
-        statusCode: 201,
-        body: {
-          data: { id: result.id },
-        },
-      };
+      return created({ id: result.id });
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          statusCode: 500,
-          body: {
-            error: error.message,
-          },
-        };
-      }
-      throw error;
+      return serverError(error as Error);
     }
   }
 }
