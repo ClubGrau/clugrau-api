@@ -1,14 +1,23 @@
+import { CreateEmployeeUsecase } from '@modules/employees/application/usecases/create-employee.usecase';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
-import { CreateEmployeeController } from './create-employee.controller';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
+import { CreateEmployeeController } from './create-employee.controller';
+
+const makeStubs = () => ({
+  createEmployeeUsecaseStub: {
+    execute: jest.fn().mockResolvedValue({ id: 'valid_employee_id' }),
+  } as unknown as CreateEmployeeUsecase,
+});
 
 const makeSut = (): SutTypes => {
-  const sut = new CreateEmployeeController();
-  return { sut };
+  const { createEmployeeUsecaseStub } = makeStubs();
+  const sut = new CreateEmployeeController(createEmployeeUsecaseStub);
+  return { sut, createEmployeeUsecaseStub };
 };
 
 type SutTypes = {
   sut: CreateEmployeeController;
+  createEmployeeUsecaseStub: CreateEmployeeUsecase;
 };
 
 describe('CreateEmployeeController', () => {
@@ -80,5 +89,22 @@ describe('CreateEmployeeController', () => {
     expect(response.body).toEqual({
       error: new MissingParamError('passwordConfirmation').message,
     });
+  });
+
+  it('should call CreateEmployeeUsecase with correct values', async () => {
+    const { sut, createEmployeeUsecaseStub } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: 'P@ssword123',
+      passwordConfirmation: 'P@ssword123',
+    };
+    const createEmployeeUsecaseSpy = jest.spyOn(
+      createEmployeeUsecaseStub,
+      'execute',
+    );
+    await sut.handle(request);
+    expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
   });
 });
