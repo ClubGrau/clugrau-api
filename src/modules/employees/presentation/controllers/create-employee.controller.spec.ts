@@ -107,4 +107,24 @@ describe('CreateEmployeeController', () => {
     await sut.handle(request);
     expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
   });
+
+  it('should return 500 if CreateEmployeeUsecase throws', async () => {
+    const { sut, createEmployeeUsecaseStub } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: 'P@ssword123',
+      passwordConfirmation: 'P@ssword123',
+    };
+    const createEmployeeUsecaseSpy = jest
+      .spyOn(createEmployeeUsecaseStub, 'execute')
+      .mockRejectedValue(new Error('CreateEmployeeUsecase error'));
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(500);
+    expect(response.body).toEqual({
+      error: 'CreateEmployeeUsecase error',
+    });
+    expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
+  });
 });
