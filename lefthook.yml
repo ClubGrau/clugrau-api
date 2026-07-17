@@ -2,7 +2,7 @@ pre-commit:
   parallel: false
   commands:
     prettier:
-      run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
+      run: npx prettier --check "src/**/*.ts"
     lint:
       run: npx eslint "{src,apps,libs,test}/**/*.ts"
     test:

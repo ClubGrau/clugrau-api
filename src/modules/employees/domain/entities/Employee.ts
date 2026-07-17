@@ -1,0 +1,128 @@
+import { Entity } from '@shared/domain/entity/entity';
+import { UniqueEntityId } from '@shared/domain/value-object/id/unique-entity-id.vo';
+import { Email, Name, Nif, Password } from '@shared/domain/value-object';
+import { EmployeeModel } from '../models/employee.model';
+import {
+  EmployeeAlreadyActiveError,
+  EmployeeAlreadyInactiveError,
+  InvalidEmployeeRoleError,
+} from '../errors/employee.errors';
+
+interface EmployeeProps {
+  name: Name;
+  email: Email;
+  password: Password;
+  nif: Nif | null;
+  role: EmployeeModel.Role;
+  isActive: boolean;
+  createdAt: Date;
+  deactivateAt: Date | null;
+}
+
+/** Input required to create a brand new employee. */
+export interface CreateEmployeeProps {
+  id?: UniqueEntityId;
+  name: Name;
+  email: Email;
+  password: Password;
+  role: EmployeeModel.Role;
+  nif?: Nif | null;
+}
+
+/** Full snapshot used to rebuild an employee from persistence. */
+export interface ReconstituteEmployeeProps {
+  id: string;
+  name: Name;
+  email: Email;
+  password: Password;
+  nif: Nif | null;
+  role: EmployeeModel.Role;
+  isActive: boolean;
+  createdAt: Date;
+  deactivateAt: Date | null;
+}
+
+export class Employee extends Entity<EmployeeProps> {
+  private constructor(props: EmployeeProps, id?: UniqueEntityId) {
+    super(props, id);
+  }
+
+  static create(input: CreateEmployeeProps): Employee {
+    if (!EmployeeModel.isRole(input.role)) {
+      throw new InvalidEmployeeRoleError(`Invalid role: "${input.role}"`);
+    }
+
+    return new Employee(
+      {
+        name: input.name,
+        email: input.email,
+        password: input.password,
+        nif: input.nif ?? null,
+        role: input.role,
+        isActive: true,
+        createdAt: new Date(),
+        deactivateAt: null,
+      },
+      input.id,
+    );
+  }
+
+  static reconstitute(input: ReconstituteEmployeeProps): Employee {
+    if (!EmployeeModel.isRole(input.role)) {
+      throw new InvalidEmployeeRoleError(`Invalid role: "${input.role}"`);
+    }
+
+    return new Employee(
+      {
+        name: input.name,
+        email: input.email,
+        password: input.password,
+        nif: input.nif,
+        role: input.role,
+        isActive: input.isActive,
+        createdAt: input.createdAt,
+        deactivateAt: input.deactivateAt,
+      },
+      new UniqueEntityId(input.id),
+    );
+  }
+
+  deactivate(): void {
+    if (!this.props.isActive) {
+      throw new EmployeeAlreadyInactiveError();
+    }
+    this.props.isActive = false;
+    this.props.deactivateAt = new Date();
+  }
+
+  activate(): void {
+    if (this.props.isActive) {
+      throw new EmployeeAlreadyActiveError();
+    }
+    this.props.isActive = true;
+    this.props.deactivateAt = null;
+  }
+
+  changePassword(password: Password): void {
+    this.props.password = password;
+  }
+
+  changeRole(role: EmployeeModel.Role): void {
+    if (!EmployeeModel.isRole(role)) {
+      throw new InvalidEmployeeRoleError(`Invalid role: "${role}"`);
+    }
+    this.props.role = role;
+  }
+
+  changeName(name: Name): void {
+    this.props.name = name;
+  }
+
+  changeEmail(email: Email): void {
+    this.props.email = email;
+  }
+
+  assignNif(nif: Nif | null): void {
+    this.props.nif = nif;
+  }
+}
