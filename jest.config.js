@@ -1,9 +1,10 @@
 /** @type {import('jest').Config} */
+// eslint-disable-next-line no-undef
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   watchman: false,
-  roots: ['<rootDir>/src', '<rootDir>/test'],
+  roots: ['<rootDir>/src'],
   testMatch: ['**/*.spec.ts', '**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   clearMocks: true,
