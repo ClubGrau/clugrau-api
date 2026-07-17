@@ -15,4 +15,20 @@ describe('EmployeeModel.Role', () => {
     expect(EmployeeModel.isRole(123)).toBe(false);
     expect(EmployeeModel.isRole(null)).toBe(false);
   });
+
+  it('should create a valid employee dto', () => {
+    const dto: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: '123456',
+      role: EmployeeModel.Role.EMPLOYEE,
+      passwordConfirmation: '123456',
+    };
+    expect(dto).toBeDefined();
+    expect(dto.name).toBe('John Doe');
+    expect(dto.email).toBe('john@example.com');
+    expect(dto.password).toBe('123456');
+    expect(dto.role).toBe(EmployeeModel.Role.EMPLOYEE);
+    expect(dto.passwordConfirmation).toBe('123456');
+  });
 });
