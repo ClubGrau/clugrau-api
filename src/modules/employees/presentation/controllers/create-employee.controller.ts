@@ -32,6 +32,15 @@ export class CreateEmployeeController {
       };
     }
 
+    if (!request.password) {
+      return {
+        statusCode: 400,
+        body: {
+          error: 'Missing param password',
+        },
+      };
+    }
+
     // TODO: call CreateEmployeeUsecase and return { data: result }
     return {
       statusCode: 200,
