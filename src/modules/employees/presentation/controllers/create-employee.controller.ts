@@ -23,6 +23,15 @@ export class CreateEmployeeController {
       };
     }
 
+    if (!request.email) {
+      return {
+        statusCode: 400,
+        body: {
+          error: 'Missing param email',
+        },
+      };
+    }
+
     // TODO: call CreateEmployeeUsecase and return { data: result }
     return {
       statusCode: 200,
