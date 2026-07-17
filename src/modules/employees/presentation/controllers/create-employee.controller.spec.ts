@@ -48,4 +48,20 @@ describe('CreateEmployeeController', () => {
       error: 'Missing param email',
     });
   });
+
+  it('should return 400 if password is not provided', async () => {
+    const { sut } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: '',
+      passwordConfirmation: 'P@ssword456',
+    };
+    const response = sut.handle(request);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toEqual({
+      error: 'Missing param password',
+    });
+  });
 });
