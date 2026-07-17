@@ -64,4 +64,20 @@ describe('CreateEmployeeController', () => {
       error: 'Missing param password',
     });
   });
+
+  it('should return 400 if passwordConfirmation is not provided', async () => {
+    const { sut } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: 'P@ssword123',
+      passwordConfirmation: '',
+    };
+    const response = sut.handle(request);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toEqual({
+      error: 'Missing param passwordConfirmation',
+    });
+  });
 });
