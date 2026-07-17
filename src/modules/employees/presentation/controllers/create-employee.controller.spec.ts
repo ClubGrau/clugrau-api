@@ -21,8 +21,8 @@ describe('CreateEmployeeController', () => {
     const { sut } = makeSut();
     const request: EmployeeModel.CreateEmployeeDto = {
       name: '',
-      role: EmployeeModel.Role.EMPLOYEE,
       email: 'test@test.com',
+      role: EmployeeModel.Role.EMPLOYEE,
       password: 'P@ssword123',
       passwordConfirmation: 'P@ssword456',
     };
@@ -30,6 +30,22 @@ describe('CreateEmployeeController', () => {
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
       error: 'Missing param name',
+    });
+  });
+
+  it('should return 400 if email is not provided', async () => {
+    const { sut } = makeSut();
+    const request: EmployeeModel.CreateEmployeeDto = {
+      name: 'John Doe',
+      email: '',
+      role: EmployeeModel.Role.EMPLOYEE,
+      password: 'P@ssword123',
+      passwordConfirmation: 'P@ssword456',
+    };
+    const response = sut.handle(request);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toEqual({
+      error: 'Missing param email',
     });
   });
 });
