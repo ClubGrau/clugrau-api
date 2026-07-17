@@ -1,5 +1,6 @@
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { CreateEmployeeController } from './create-employee.controller';
+import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 
 const makeSut = (): SutTypes => {
   const sut = new CreateEmployeeController();
@@ -29,7 +30,7 @@ describe('CreateEmployeeController', () => {
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
-      error: 'Missing param name',
+      error: new MissingParamError('name').message,
     });
   });
 
@@ -45,7 +46,7 @@ describe('CreateEmployeeController', () => {
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
-      error: 'Missing param email',
+      error: new MissingParamError('email').message,
     });
   });
 
@@ -61,7 +62,7 @@ describe('CreateEmployeeController', () => {
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
-      error: 'Missing param password',
+      error: new MissingParamError('password').message,
     });
   });
 
@@ -77,7 +78,7 @@ describe('CreateEmployeeController', () => {
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
-      error: 'Missing param passwordConfirmation',
+      error: new MissingParamError('passwordConfirmation').message,
     });
   });
 });
