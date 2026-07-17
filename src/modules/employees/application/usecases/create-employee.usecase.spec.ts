@@ -13,17 +13,24 @@ import {
   InvalidPasswordError,
 } from '@shared/domain/value-object';
 import { FindEmployeeByEmailPort } from '../ports/outbound/find-employee-by-email.port';
+import { EncrypterPort } from '../ports/outbound/encrypter.port';
 
 const makeStubs = () => ({
   employeePoliciesServiceStub: new EmployeePoliciesService({
     findByEmail: jest.fn().mockResolvedValue(null),
   } satisfies FindEmployeeByEmailPort),
+  encrypterStub: {
+    encrypt: jest.fn().mockResolvedValue('encrypted-password'),
+  } satisfies EncrypterPort,
 });
 
 const makeSut = (): SutTypes => {
-  const { employeePoliciesServiceStub } = makeStubs();
-  const sut = new CreateEmployeeUsecase(employeePoliciesServiceStub);
-  return { sut, employeePoliciesServiceStub };
+  const { employeePoliciesServiceStub, encrypterStub } = makeStubs();
+  const sut = new CreateEmployeeUsecase(
+    employeePoliciesServiceStub,
+    encrypterStub,
+  );
+  return { sut, employeePoliciesServiceStub, encrypterStub };
 };
 
 const makeValidParams = (
@@ -40,6 +47,7 @@ const makeValidParams = (
 type SutTypes = {
   sut: CreateEmployeeUsecase;
   employeePoliciesServiceStub: EmployeePoliciesService;
+  encrypterStub: EncrypterPort;
 };
 
 describe('HireEmployeeUsecase', () => {
@@ -121,6 +129,14 @@ describe('HireEmployeeUsecase', () => {
     const execute = () => sut.execute(makeValidParams());
 
     await expect(execute).rejects.toBeInstanceOf(EmployeeInactiveError);
+  });
+
+  it('should call Encrypter with correct plan password', async () => {
+    const { sut, encrypterStub } = makeSut();
+    const encryptSpy = jest.spyOn(encrypterStub, 'encrypt');
+    const params = makeValidParams();
+    await sut.execute(params);
+    expect(encryptSpy).toHaveBeenCalledWith(params.password);
   });
 
   describe('Employee entity creation', () => {
