@@ -192,6 +192,18 @@ describe('HireEmployeeUsecase', () => {
     await expect(sut.execute(params)).rejects.toThrow('Repository error');
   });
 
+  it('should return employee id on success', async () => {
+    const { sut, createEmployeeRepositoryStub } = makeSut();
+    const params = makeValidParams();
+    const createSpy = jest.spyOn(createEmployeeRepositoryStub, 'create');
+    const result = await sut.execute(params);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ id: expect.any(String) }),
+    );
+    expect(result).toEqual({ id: 'valid_employee_id' });
+  });
+
   describe('Employee entity creation', () => {
     it('should create an Employee from the mapped dto fields', async () => {
       const { sut } = makeSut();
@@ -219,9 +231,10 @@ describe('HireEmployeeUsecase', () => {
       );
     });
 
-    it('should resolve when params are valid', async () => {
+    it('should resolve with employee id when params are valid', async () => {
       const { sut } = makeSut();
-      await expect(sut.execute(makeValidParams())).resolves.toBeUndefined();
+      const promise = sut.execute(makeValidParams());
+      await expect(promise).resolves.toEqual({ id: 'valid_employee_id' });
     });
   });
 
