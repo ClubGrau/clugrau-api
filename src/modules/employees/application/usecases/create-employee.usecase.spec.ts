@@ -14,6 +14,7 @@ import {
 } from '@shared/domain/value-object';
 import { FindEmployeeByEmailPort } from '../ports/outbound/find-employee-by-email.port';
 import { EncrypterPort } from '../ports/outbound/encrypter.port';
+import { CreateEmployeeRepositoryPort } from '../ports/outbound/create-employee-repository.port';
 
 const makeStubs = () => ({
   employeePoliciesServiceStub: new EmployeePoliciesService({
@@ -22,15 +23,28 @@ const makeStubs = () => ({
   encrypterStub: {
     encrypt: jest.fn().mockResolvedValue('encrypted-password'),
   } satisfies EncrypterPort,
+  createEmployeeRepositoryStub: {
+    create: jest.fn().mockResolvedValue({ id: 'valid_employee_id' }),
+  } satisfies CreateEmployeeRepositoryPort,
 });
 
 const makeSut = (): SutTypes => {
-  const { employeePoliciesServiceStub, encrypterStub } = makeStubs();
+  const {
+    employeePoliciesServiceStub,
+    encrypterStub,
+    createEmployeeRepositoryStub,
+  } = makeStubs();
   const sut = new CreateEmployeeUsecase(
     employeePoliciesServiceStub,
     encrypterStub,
+    createEmployeeRepositoryStub,
   );
-  return { sut, employeePoliciesServiceStub, encrypterStub };
+  return {
+    sut,
+    employeePoliciesServiceStub,
+    encrypterStub,
+    createEmployeeRepositoryStub,
+  };
 };
 
 const makeValidParams = (
@@ -48,6 +62,7 @@ type SutTypes = {
   sut: CreateEmployeeUsecase;
   employeePoliciesServiceStub: EmployeePoliciesService;
   encrypterStub: EncrypterPort;
+  createEmployeeRepositoryStub: CreateEmployeeRepositoryPort;
 };
 
 describe('HireEmployeeUsecase', () => {
@@ -140,12 +155,32 @@ describe('HireEmployeeUsecase', () => {
   });
 
   it('should throw if encrypter throws', async () => {
-    const { sut, encrypterStub } = await makeSut();
+    const { sut, encrypterStub } = makeSut();
     const params = makeValidParams();
     jest
       .spyOn(encrypterStub, 'encrypt')
       .mockRejectedValueOnce(new Error('Encryption error'));
     await expect(sut.execute(params)).rejects.toThrow('Encryption error');
+  });
+
+  it('should call CreateEmployeeRepository with correct params', async () => {
+    const { sut, createEmployeeRepositoryStub } = makeSut();
+    const params = makeValidParams();
+    const createSpy = jest.spyOn(createEmployeeRepositoryStub, 'create');
+    await sut.execute(params);
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: expect.any(String),
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        role: EmployeeModel.Role.MANAGER,
+        nif: null,
+        password: 'encrypted-password',
+        isActive: true,
+        deactivateAt: null,
+        createdAt: expect.any(Date),
+      }),
+    );
   });
 
   describe('Employee entity creation', () => {
