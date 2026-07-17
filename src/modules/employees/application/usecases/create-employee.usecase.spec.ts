@@ -139,6 +139,15 @@ describe('HireEmployeeUsecase', () => {
     expect(encryptSpy).toHaveBeenCalledWith(params.password);
   });
 
+  it('should throw if encrypter throws', async () => {
+    const { sut, encrypterStub } = await makeSut();
+    const params = makeValidParams();
+    jest
+      .spyOn(encrypterStub, 'encrypt')
+      .mockRejectedValueOnce(new Error('Encryption error'));
+    await expect(sut.execute(params)).rejects.toThrow('Encryption error');
+  });
+
   describe('Employee entity creation', () => {
     it('should create an Employee from the mapped dto fields', async () => {
       const { sut } = makeSut();
