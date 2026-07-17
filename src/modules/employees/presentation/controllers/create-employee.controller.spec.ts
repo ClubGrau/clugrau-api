@@ -26,7 +26,7 @@ describe('CreateEmployeeController', () => {
       password: 'P@ssword123',
       passwordConfirmation: 'P@ssword456',
     };
-    const response = sut.handle(request);
+    const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
       error: 'Missing param name',
@@ -42,7 +42,7 @@ describe('CreateEmployeeController', () => {
       password: 'P@ssword123',
       passwordConfirmation: 'P@ssword456',
     };
-    const response = sut.handle(request);
+    const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
       error: 'Missing param email',
@@ -58,7 +58,7 @@ describe('CreateEmployeeController', () => {
       password: '',
       passwordConfirmation: 'P@ssword456',
     };
-    const response = sut.handle(request);
+    const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
       error: 'Missing param password',
@@ -74,7 +74,7 @@ describe('CreateEmployeeController', () => {
       password: 'P@ssword123',
       passwordConfirmation: '',
     };
-    const response = sut.handle(request);
+    const response = await sut.handle(request);
     expect(response.statusCode).toBe(400);
     expect(response.body).toEqual({
       error: 'Missing param passwordConfirmation',
