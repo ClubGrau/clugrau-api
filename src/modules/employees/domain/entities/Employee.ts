@@ -102,6 +102,10 @@ export class Employee extends Entity<EmployeeProps> {
     this.props.deactivateAt = null;
   }
 
+  get isActive(): boolean {
+    return this.props.isActive;
+  }
+
   changePassword(password: Password): void {
     this.props.password = password;
   }

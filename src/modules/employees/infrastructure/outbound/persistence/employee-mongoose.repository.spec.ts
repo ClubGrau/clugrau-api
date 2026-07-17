@@ -1,0 +1,34 @@
+import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
+import { makeChainableMock } from '../../../../../configs/database/mongoose/testables';
+import { EmployeeMongooseRepository } from './employee-mongoose.repository';
+import { EmployeeDocument } from './employee.schema';
+import mongoose, { Model } from 'mongoose';
+
+const mockEmployee = {
+  _id: new mongoose.Types.ObjectId(),
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  role: EmployeeModel.Role.ADMIN,
+  password: 'hashed_password',
+  nif: 123456789,
+  isActive: true,
+  createdAt: new Date('2024-01-01T00:00:00Z'),
+  deactivateAt: null,
+} as EmployeeDocument;
+
+const mongooseMocks = () => makeChainableMock(mockEmployee);
+
+const makeSut = () => {
+  const employeeModelMock = mongooseMocks();
+  const mongooseDeps = employeeModelMock as unknown as Model<EmployeeDocument>;
+  const sut = new EmployeeMongooseRepository(mongooseDeps);
+  return { sut, employeeModelMock };
+};
+
+describe('EmployeeMongooseRepository', () => {
+  it('should be defined', () => {
+    const { sut } = makeSut();
+    expect(sut).toBeDefined();
+    expect(sut).toBeInstanceOf(EmployeeMongooseRepository);
+  });
+});
