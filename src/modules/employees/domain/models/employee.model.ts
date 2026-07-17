@@ -18,6 +18,10 @@ export namespace EmployeeModel {
     passwordConfirmation: string;
   }
 
+  export interface CreateEmployeeResultDto {
+    id: string;
+  }
+
   export const ROLES: readonly Role[] = Object.freeze(Object.values(Role));
 
   export function isRole(value: unknown): value is Role {
