@@ -1,5 +1,9 @@
 import { Employee } from '../entities/Employee';
 
+/**
+ * Conceitos de domínio do Employee.
+ * DTOs de entrada/saída de casos de uso ficam em application/dtos.
+ */
 export namespace EmployeeModel {
   export enum Role {
     ADMIN = 'ADMIN',
@@ -7,20 +11,8 @@ export namespace EmployeeModel {
     EMPLOYEE = 'EMPLOYEE',
   }
 
+  /** Snapshot serializado da entidade (persistência / ports de saída). */
   export type toCreate = ReturnType<Employee['toJSON']>;
-
-  export interface CreateEmployeeDto {
-    name: string;
-    email: string;
-    role: Role;
-    nif?: number | null;
-    password: string;
-    passwordConfirmation: string;
-  }
-
-  export interface CreateEmployeeResultDto {
-    id: string;
-  }
 
   export const ROLES: readonly Role[] = Object.freeze(Object.values(Role));
 

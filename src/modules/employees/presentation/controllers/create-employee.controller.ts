@@ -1,5 +1,8 @@
 import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
-import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
+import {
+  CreateEmployeeDto,
+  CreateEmployeeResultDto,
+} from '@modules/employees/application/dtos/create-employee.dto';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import {
   badRequest,
@@ -12,19 +15,17 @@ import { BaseController } from '@shared/presentation/protocols/base-controller';
 import { HttpResponse } from '@shared/presentation/protocols/http-response';
 
 export class CreateEmployeeController extends BaseController<
-  EmployeeModel.CreateEmployeeDto,
-  HttpErrorBody | HttpSuccessBody<EmployeeModel.CreateEmployeeResultDto>
+  CreateEmployeeDto,
+  HttpErrorBody | HttpSuccessBody<CreateEmployeeResultDto>
 > {
   constructor(private readonly createEmployee: CreateEmployeePort) {
     super();
   }
 
   async handle(
-    request: EmployeeModel.CreateEmployeeDto,
+    request: CreateEmployeeDto,
   ): Promise<
-    HttpResponse<
-      HttpErrorBody | HttpSuccessBody<EmployeeModel.CreateEmployeeResultDto>
-    >
+    HttpResponse<HttpErrorBody | HttpSuccessBody<CreateEmployeeResultDto>>
   > {
     try {
       const requiredFields = [

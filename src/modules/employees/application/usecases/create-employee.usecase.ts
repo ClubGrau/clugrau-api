@@ -3,6 +3,10 @@ import { PasswordNotMatchError } from '@modules/employees/domain/errors/employee
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
 import { EncrypterPort } from '@shared/application/ports/encrypter.port';
+import {
+  CreateEmployeeDto,
+  CreateEmployeeResultDto,
+} from '../dtos/create-employee.dto';
 import { CreateEmployeePort } from '../ports/inbound/create-employee.port';
 import { CreateEmployeeRepositoryPort } from '../ports/outbound/create-employee-repository.port';
 
@@ -13,9 +17,7 @@ export class CreateEmployeeUsecase implements CreateEmployeePort {
     private readonly createEmployeeRepository: CreateEmployeeRepositoryPort,
   ) {}
 
-  async execute(
-    params: EmployeeModel.CreateEmployeeDto,
-  ): Promise<EmployeeModel.CreateEmployeeResultDto> {
+  async execute(params: CreateEmployeeDto): Promise<CreateEmployeeResultDto> {
     const { password, passwordConfirmation } = params;
 
     if (password !== passwordConfirmation) {

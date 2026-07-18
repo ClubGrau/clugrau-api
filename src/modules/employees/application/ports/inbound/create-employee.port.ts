@@ -1,7 +1,8 @@
-import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
+import {
+  CreateEmployeeDto,
+  CreateEmployeeResultDto,
+} from '../../dtos/create-employee.dto';
 
 export interface CreateEmployeePort {
-  execute(
-    params: EmployeeModel.CreateEmployeeDto,
-  ): Promise<EmployeeModel.CreateEmployeeResultDto>;
+  execute(params: CreateEmployeeDto): Promise<CreateEmployeeResultDto>;
 }

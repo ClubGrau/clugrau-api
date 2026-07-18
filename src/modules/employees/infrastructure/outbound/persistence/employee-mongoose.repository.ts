@@ -1,3 +1,4 @@
+import { CreateEmployeeResultDto } from '@modules/employees/application/dtos/create-employee.dto';
 import { CreateEmployeeRepositoryPort } from '@modules/employees/application/ports/outbound/create-employee-repository.port';
 import { FindEmployeeByEmailPort } from '@modules/employees/domain/ports/find-employee-by-email.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
@@ -11,7 +12,7 @@ export class EmployeeMongooseRepository
 
   async create(
     employee: EmployeeModel.toCreate,
-  ): Promise<EmployeeModel.CreateEmployeeResultDto> {
+  ): Promise<CreateEmployeeResultDto> {
     const createdEmployee = await this.employeeModel.create(
       mapToCreateDocument(employee),
     );

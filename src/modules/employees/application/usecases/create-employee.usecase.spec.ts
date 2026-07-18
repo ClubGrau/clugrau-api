@@ -14,6 +14,7 @@ import {
 } from '@shared/domain/value-object';
 import { FindEmployeeByEmailPort } from '@modules/employees/domain/ports/find-employee-by-email.port';
 import { EncrypterPort } from '@shared/application/ports/encrypter.port';
+import { CreateEmployeeDto } from '../dtos/create-employee.dto';
 import { CreateEmployeeRepositoryPort } from '../ports/outbound/create-employee-repository.port';
 
 const makeStubs = () => ({
@@ -48,8 +49,8 @@ const makeSut = (): SutTypes => {
 };
 
 const makeValidParams = (
-  overrides: Partial<EmployeeModel.CreateEmployeeDto> = {},
-): EmployeeModel.CreateEmployeeDto => ({
+  overrides: Partial<CreateEmployeeDto> = {},
+): CreateEmployeeDto => ({
   name: 'John Doe',
   email: 'john.doe@example.com',
   role: EmployeeModel.Role.MANAGER,

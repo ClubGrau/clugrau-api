@@ -1,3 +1,4 @@
+import { CreateEmployeeDto } from '@modules/employees/application/dtos/create-employee.dto';
 import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
@@ -29,7 +30,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 400 if name is not provided', async () => {
     const { sut } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: '',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -45,7 +46,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 400 if email is not provided', async () => {
     const { sut } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: '',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -61,7 +62,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 400 if password is not provided', async () => {
     const { sut } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -77,7 +78,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 400 if passwordConfirmation is not provided', async () => {
     const { sut } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -93,7 +94,7 @@ describe('CreateEmployeeController', () => {
 
   it('should call CreateEmployeePort with correct values', async () => {
     const { sut, createEmployeeStub } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -107,7 +108,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 500 if CreateEmployeePort throws', async () => {
     const { sut, createEmployeeStub } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
@@ -127,7 +128,7 @@ describe('CreateEmployeeController', () => {
 
   it('should return 201 if employee is created successfully', async () => {
     const { sut } = makeSut();
-    const request: EmployeeModel.CreateEmployeeDto = {
+    const request: CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
       role: EmployeeModel.Role.EMPLOYEE,
