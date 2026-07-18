@@ -1,6 +1,7 @@
+import { LoginPort } from '@modules/auth/application/ports/inbound/login.port';
+import { AuthenticationError } from '@modules/auth/domain/errors/auth.errors';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import { AuthController } from './auth.controller';
-import { LoginPort } from '@modules/auth/application/ports/inbound/login.port';
 
 const makeStubs = () => ({
   loginPortStub: {
@@ -102,6 +103,22 @@ describe('AuthController', () => {
       data: {
         token: 'valid_token',
       },
+    });
+  });
+
+  it('should return 401 if LoginPort throws authentication error', async () => {
+    const { sut, loginPortStub } = makeSut();
+    jest
+      .spyOn(loginPortStub, 'execute')
+      .mockRejectedValue(new AuthenticationError('Authentication error'));
+    const request = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    const httpResponse = await sut.handle(request);
+    expect(httpResponse.statusCode).toBe(401);
+    expect(httpResponse.body).toEqual({
+      error: 'Authentication error',
     });
   });
 });
