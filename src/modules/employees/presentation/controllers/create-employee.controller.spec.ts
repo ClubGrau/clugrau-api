@@ -1,23 +1,23 @@
-import { CreateEmployeeUsecase } from '@modules/employees/application/usecases/create-employee.usecase';
+import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import { CreateEmployeeController } from './create-employee.controller';
 
 const makeStubs = () => ({
-  createEmployeeUsecaseStub: {
+  createEmployeeStub: {
     execute: jest.fn().mockResolvedValue({ id: 'valid_employee_id' }),
-  } as unknown as CreateEmployeeUsecase,
+  } satisfies CreateEmployeePort,
 });
 
 const makeSut = (): SutTypes => {
-  const { createEmployeeUsecaseStub } = makeStubs();
-  const sut = new CreateEmployeeController(createEmployeeUsecaseStub);
-  return { sut, createEmployeeUsecaseStub };
+  const { createEmployeeStub } = makeStubs();
+  const sut = new CreateEmployeeController(createEmployeeStub);
+  return { sut, createEmployeeStub };
 };
 
 type SutTypes = {
   sut: CreateEmployeeController;
-  createEmployeeUsecaseStub: CreateEmployeeUsecase;
+  createEmployeeStub: CreateEmployeePort;
 };
 
 describe('CreateEmployeeController', () => {
@@ -91,8 +91,8 @@ describe('CreateEmployeeController', () => {
     });
   });
 
-  it('should call CreateEmployeeUsecase with correct values', async () => {
-    const { sut, createEmployeeUsecaseStub } = makeSut();
+  it('should call CreateEmployeePort with correct values', async () => {
+    const { sut, createEmployeeStub } = makeSut();
     const request: EmployeeModel.CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
@@ -100,16 +100,13 @@ describe('CreateEmployeeController', () => {
       password: 'P@ssword123',
       passwordConfirmation: 'P@ssword123',
     };
-    const createEmployeeUsecaseSpy = jest.spyOn(
-      createEmployeeUsecaseStub,
-      'execute',
-    );
+    const createEmployeeSpy = jest.spyOn(createEmployeeStub, 'execute');
     await sut.handle(request);
-    expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
+    expect(createEmployeeSpy).toHaveBeenCalledWith(request);
   });
 
-  it('should return 500 if CreateEmployeeUsecase throws', async () => {
-    const { sut, createEmployeeUsecaseStub } = makeSut();
+  it('should return 500 if CreateEmployeePort throws', async () => {
+    const { sut, createEmployeeStub } = makeSut();
     const request: EmployeeModel.CreateEmployeeDto = {
       name: 'John Doe',
       email: 'test@test.com',
@@ -117,15 +114,15 @@ describe('CreateEmployeeController', () => {
       password: 'P@ssword123',
       passwordConfirmation: 'P@ssword123',
     };
-    const createEmployeeUsecaseSpy = jest
-      .spyOn(createEmployeeUsecaseStub, 'execute')
-      .mockRejectedValue(new Error('CreateEmployeeUsecase error'));
+    const createEmployeeSpy = jest
+      .spyOn(createEmployeeStub, 'execute')
+      .mockRejectedValue(new Error('CreateEmployeePort error'));
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(500);
     expect(response.body).toEqual({
-      error: 'CreateEmployeeUsecase error',
+      error: 'CreateEmployeePort error',
     });
-    expect(createEmployeeUsecaseSpy).toHaveBeenCalledWith(request);
+    expect(createEmployeeSpy).toHaveBeenCalledWith(request);
   });
 
   it('should return 201 if employee is created successfully', async () => {

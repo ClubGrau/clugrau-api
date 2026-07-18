@@ -1,16 +1,17 @@
 import { Connection } from 'mongoose';
 import { Router } from 'express';
+import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
 import { CreateEmployeeUsecase } from '@modules/employees/application/usecases/create-employee.usecase';
 import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
+import { makeEmployeeRoutes } from '@modules/employees/infrastructure/inbound/http/employee.routes';
 import { EmployeeSchema } from '@modules/employees/infrastructure/outbound/persistence/employee.schema';
 import { EmployeeMongooseRepository } from '@modules/employees/infrastructure/outbound/persistence/employee-mongoose.repository';
 import { CreateEmployeeController } from '@modules/employees/presentation/controllers/create-employee.controller';
 import { EncrypterPort } from '@shared/application/ports/encrypter.port';
-import { makeEmployeeRoutes } from '@modules/employees/infrastructure/inbound/http/employee.routes';
 
 export type EmployeesModule = {
   createEmployeeController: CreateEmployeeController;
-  createEmployeeUsecase: CreateEmployeeUsecase;
+  createEmployee: CreateEmployeePort;
   router: Router;
 };
 
@@ -29,19 +30,17 @@ export function makeEmployeesModule({
     employeeRepository,
   );
 
-  const createEmployeeUsecase = new CreateEmployeeUsecase(
+  const createEmployee: CreateEmployeePort = new CreateEmployeeUsecase(
     employeePoliciesService,
     encrypter,
     employeeRepository,
   );
 
-  const createEmployeeController = new CreateEmployeeController(
-    createEmployeeUsecase,
-  );
+  const createEmployeeController = new CreateEmployeeController(createEmployee);
 
   return {
     createEmployeeController,
-    createEmployeeUsecase,
+    createEmployee,
     router: makeEmployeeRoutes({ createEmployeeController }),
   };
 }

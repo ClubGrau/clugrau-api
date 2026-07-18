@@ -1,4 +1,4 @@
-import { CreateEmployeeUsecase } from '@modules/employees/application/usecases/create-employee.usecase';
+import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import {
@@ -15,7 +15,7 @@ export class CreateEmployeeController extends BaseController<
   EmployeeModel.CreateEmployeeDto,
   HttpErrorBody | HttpSuccessBody<EmployeeModel.CreateEmployeeResultDto>
 > {
-  constructor(private readonly createEmployeeUsecase: CreateEmployeeUsecase) {
+  constructor(private readonly createEmployee: CreateEmployeePort) {
     super();
   }
 
@@ -42,7 +42,7 @@ export class CreateEmployeeController extends BaseController<
         return badRequest(new MissingParamError(missingField));
       }
 
-      const result = await this.createEmployeeUsecase.execute({
+      const result = await this.createEmployee.execute({
         name: request.name,
         email: request.email,
         role: request.role,

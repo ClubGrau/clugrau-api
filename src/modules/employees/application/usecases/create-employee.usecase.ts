@@ -3,9 +3,10 @@ import { PasswordNotMatchError } from '@modules/employees/domain/errors/employee
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
 import { EncrypterPort } from '@shared/application/ports/encrypter.port';
+import { CreateEmployeePort } from '../ports/inbound/create-employee.port';
 import { CreateEmployeeRepositoryPort } from '../ports/outbound/create-employee-repository.port';
 
-export class CreateEmployeeUsecase {
+export class CreateEmployeeUsecase implements CreateEmployeePort {
   constructor(
     private readonly employeePoliciesService: EmployeePoliciesService,
     private readonly encrypter: EncrypterPort,
