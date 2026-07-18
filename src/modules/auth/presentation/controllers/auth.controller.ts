@@ -6,6 +6,7 @@ import {
   badRequest,
   HttpErrorBody,
   HttpSuccessBody,
+  serverError,
 } from '@shared/presentation/helpers/http-helper';
 import {
   LoginDto,
@@ -23,22 +24,26 @@ export class AuthController extends BaseController<
   async handle(
     request: LoginDto,
   ): Promise<HttpResponse<HttpErrorBody | HttpSuccessBody<LoginResultDto>>> {
-    const requiredFields = ['email', 'password'];
-    for (const field of requiredFields) {
-      if (!request[field as keyof LoginDto]) {
-        return badRequest(new MissingParamError(field));
+    try {
+      const requiredFields = ['email', 'password'];
+      for (const field of requiredFields) {
+        if (!request[field as keyof LoginDto]) {
+          return badRequest(new MissingParamError(field));
+        }
       }
-    }
 
-    await this.login.execute(request);
+      await this.login.execute(request);
 
-    return {
-      statusCode: 200,
-      body: {
-        data: {
-          token: 'valid_token',
+      return {
+        statusCode: 200,
+        body: {
+          data: {
+            token: 'valid_token',
+          },
         },
-      },
-    };
+      };
+    } catch (error) {
+      return serverError(error as Error);
+    }
   }
 }
