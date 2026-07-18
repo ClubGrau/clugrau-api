@@ -32,13 +32,13 @@ export class AuthController extends BaseController<
         }
       }
 
-      await this.login.execute(request);
+      const result = await this.login.execute(request);
 
       return {
         statusCode: 200,
         body: {
           data: {
-            token: 'valid_token',
+            token: result.token,
           },
         },
       };
