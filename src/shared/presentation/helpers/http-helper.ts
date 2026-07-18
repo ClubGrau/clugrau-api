@@ -17,6 +17,13 @@ export const created = <T>(data: T): HttpResponse<HttpSuccessBody<T>> => ({
   },
 });
 
+export const ok = <T>(data: T): HttpResponse<HttpSuccessBody<T>> => ({
+  statusCode: 200,
+  body: {
+    data,
+  },
+});
+
 export const serverError = (error: Error): HttpResponse<HttpErrorBody> => ({
   statusCode: 500,
   body: {

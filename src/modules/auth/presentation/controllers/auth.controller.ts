@@ -6,6 +6,7 @@ import {
   badRequest,
   HttpErrorBody,
   HttpSuccessBody,
+  ok,
   serverError,
 } from '@shared/presentation/helpers/http-helper';
 import {
@@ -32,16 +33,9 @@ export class AuthController extends BaseController<
         }
       }
 
-      const result = await this.login.execute(request);
+      const { token } = await this.login.execute(request);
 
-      return {
-        statusCode: 200,
-        body: {
-          data: {
-            token: result.token,
-          },
-        },
-      };
+      return ok({ token });
     } catch (error) {
       return serverError(error as Error);
     }
