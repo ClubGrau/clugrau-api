@@ -1,3 +1,4 @@
+import { MissingParamError } from '@shared/presentation/errors/missing-param.error';
 import { AuthController } from './auth.controller';
 
 const makeSut = () => {
@@ -12,5 +13,16 @@ describe('AuthController', () => {
     const { sut } = makeSut();
     expect(sut).toBeDefined();
     expect(sut).toBeInstanceOf(AuthController);
+  });
+
+  it('should return 400 if no email is provided', () => {
+    const { sut } = makeSut();
+    const request = {
+      email: '',
+      password: 'any_password',
+    };
+    const httpResponse = sut.handle(request);
+    expect(httpResponse.statusCode).toBe(400);
+    expect(httpResponse.body).toEqual(new MissingParamError('email'));
   });
 });
