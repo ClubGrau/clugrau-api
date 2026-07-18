@@ -14,5 +14,12 @@ export class AuthController {
         body: new MissingParamError('email'),
       };
     }
+
+    if (!request.password) {
+      return {
+        statusCode: 400,
+        body: new MissingParamError('password'),
+      };
+    }
   }
 }
