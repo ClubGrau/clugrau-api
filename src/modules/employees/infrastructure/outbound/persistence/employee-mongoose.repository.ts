@@ -1,14 +1,13 @@
-import { Model } from 'mongoose';
 import { CreateEmployeeRepositoryPort } from '@modules/employees/application/ports/outbound/create-employee-repository.port';
 import { FindEmployeeByEmailPort } from '@modules/employees/application/ports/outbound/find-employee-by-email.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
-import { EmployeeDocument } from './employee.schema';
+import { EmployeeDocument, EmployeeMongooseModel } from './employee.schema';
 import { mapEmployeeDocument, mapToCreateDocument } from './employee.mapper';
 
 export class EmployeeMongooseRepository
   implements FindEmployeeByEmailPort, CreateEmployeeRepositoryPort
 {
-  constructor(private readonly employeeModel: Model<EmployeeDocument>) {}
+  constructor(private readonly employeeModel: EmployeeMongooseModel) {}
 
   async create(
     employee: EmployeeModel.toCreate,

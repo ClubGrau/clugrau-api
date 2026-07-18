@@ -1,4 +1,4 @@
-import mongoose, { InferSchemaType } from 'mongoose';
+import mongoose, { InferSchemaType, Model } from 'mongoose';
 
 export const EmployeeSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -15,8 +15,13 @@ export const EmployeeSchema = new mongoose.Schema({
   deactivateAt: { type: Date, default: null },
 });
 
-EmployeeSchema.index({ email: 1 }, { unique: true });
+/** Campos inferidos do Schema (sem `_id` — é o que `connection.model` tipa). */
+export type EmployeeSchemaType = InferSchemaType<typeof EmployeeSchema>;
 
-export type EmployeeDocument = InferSchemaType<typeof EmployeeSchema> & {
+/** Documento lido do Mongo (lean/hydrated) com `_id`. */
+export type EmployeeDocument = EmployeeSchemaType & {
   _id: mongoose.Types.ObjectId;
 };
+
+/** Tipo do Model Mongoose — use este no repository/module. */
+export type EmployeeMongooseModel = Model<EmployeeSchemaType>;

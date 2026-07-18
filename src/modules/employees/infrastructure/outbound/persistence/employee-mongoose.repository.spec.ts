@@ -1,8 +1,8 @@
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import { makeChainableMock } from '../../../../../configs/database/mongoose/testables';
 import { EmployeeMongooseRepository } from './employee-mongoose.repository';
-import { EmployeeDocument } from './employee.schema';
-import mongoose, { Model } from 'mongoose';
+import { EmployeeDocument, EmployeeMongooseModel } from './employee.schema';
+import mongoose from 'mongoose';
 
 const mockEmployee = {
   _id: new mongoose.Types.ObjectId(),
@@ -20,7 +20,7 @@ const mongooseMocks = () => makeChainableMock(mockEmployee);
 
 const makeSut = () => {
   const employeeModelMock = mongooseMocks();
-  const mongooseDeps = employeeModelMock as unknown as Model<EmployeeDocument>;
+  const mongooseDeps = employeeModelMock as unknown as EmployeeMongooseModel;
   const sut = new EmployeeMongooseRepository(mongooseDeps);
   return { sut, employeeModelMock };
 };
