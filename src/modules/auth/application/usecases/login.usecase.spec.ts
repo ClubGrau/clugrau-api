@@ -22,7 +22,6 @@ const makeStubs = () => ({
   tokenProviderPortStub: {
     generateToken: jest.fn().mockResolvedValue({
       token: 'any_token',
-      expiresIn: 1000,
     }),
   } satisfies TokenProviderPort<AuthenticatableUser>,
 });
@@ -148,5 +147,18 @@ describe('LoginUsecase', () => {
       role: 'EMPLOYEE',
       isActive: true,
     });
+  });
+
+  it('should return the token from the token provider', async () => {
+    const { sut, tokenProviderPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    jest.spyOn(tokenProviderPortStub, 'generateToken').mockResolvedValueOnce({
+      token: 'any_token',
+    });
+    const token = await sut.execute(params);
+    expect(token).toEqual({ token: 'any_token' });
   });
 });
