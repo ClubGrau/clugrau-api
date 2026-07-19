@@ -107,4 +107,15 @@ describe('LoginUsecase', () => {
       'hashed_password',
     );
   });
+
+  it('should throw AuthenticationError when password is incorrect', async () => {
+    const { sut, comparePasswordPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    jest.spyOn(comparePasswordPortStub, 'compare').mockResolvedValueOnce(false);
+    const promise = sut.execute(params);
+    await expect(promise).rejects.toThrow(AuthenticationError);
+  });
 });
