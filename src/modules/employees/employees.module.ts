@@ -1,5 +1,5 @@
 import { Connection } from 'mongoose';
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { CreateEmployeePort } from '@modules/employees/application/ports/inbound/create-employee.port';
 import { CreateEmployeeUsecase } from '@modules/employees/application/usecases/create-employee.usecase';
 import { EmployeePoliciesService } from '@modules/employees/domain/services/employee-policies.service';
@@ -18,11 +18,13 @@ export type EmployeesModule = {
 type EmployeesModuleDeps = {
   connection: Connection;
   encrypter: EncrypterPort;
+  authTokenMiddleware: RequestHandler;
 };
 
 export function makeEmployeesModule({
   connection,
   encrypter,
+  authTokenMiddleware,
 }: EmployeesModuleDeps): EmployeesModule {
   const employeeModel = connection.model('Employee', EmployeeSchema);
   const employeeRepository = new EmployeeMongooseRepository(employeeModel);
@@ -38,9 +40,14 @@ export function makeEmployeesModule({
 
   const createEmployeeController = new CreateEmployeeController(createEmployee);
 
+  const router = makeEmployeeRoutes({
+    createEmployeeController,
+    authTokenMiddleware,
+  });
+
   return {
     createEmployeeController,
     createEmployee,
-    router: makeEmployeeRoutes({ createEmployeeController }),
+    router,
   };
 }
