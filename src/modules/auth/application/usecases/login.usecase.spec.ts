@@ -2,6 +2,8 @@ import { AuthenticationError } from '@modules/auth/domain/errors/auth.errors';
 import { FindAuthenticatableByEmailPort } from '../ports/outbound/find-authenticable-by-email.port';
 import { LoginUseCase } from './login.usecase';
 import { CompareHashPort } from '@shared/application/ports/compare-hash.port';
+import { TokenProviderPort } from '../ports/outbound/token-provider.port';
+import { AuthenticatableUser } from '@modules/auth/domain/models/authenticatable-user.model';
 
 const makeStubs = () => ({
   findAuthenticatableByEmailPortStub: {
@@ -17,19 +19,30 @@ const makeStubs = () => ({
   comparePasswordPortStub: {
     compare: jest.fn().mockResolvedValue(true),
   } satisfies CompareHashPort,
+  tokenProviderPortStub: {
+    generateToken: jest.fn().mockResolvedValue({
+      token: 'any_token',
+      expiresIn: 1000,
+    }),
+  } satisfies TokenProviderPort<AuthenticatableUser>,
 });
 
 const makeSut = (): SutTypes => {
-  const { findAuthenticatableByEmailPortStub, comparePasswordPortStub } =
-    makeStubs();
+  const {
+    findAuthenticatableByEmailPortStub,
+    comparePasswordPortStub,
+    tokenProviderPortStub,
+  } = makeStubs();
   const sut = new LoginUseCase(
     findAuthenticatableByEmailPortStub,
     comparePasswordPortStub,
+    tokenProviderPortStub,
   );
   return {
     sut,
     findAuthenticatableByEmailPortStub,
     comparePasswordPortStub,
+    tokenProviderPortStub,
   };
 };
 
@@ -37,6 +50,7 @@ type SutTypes = {
   sut: LoginUseCase;
   findAuthenticatableByEmailPortStub: FindAuthenticatableByEmailPort;
   comparePasswordPortStub: CompareHashPort;
+  tokenProviderPortStub: TokenProviderPort<AuthenticatableUser>;
 };
 
 describe('LoginUsecase', () => {
@@ -117,5 +131,22 @@ describe('LoginUsecase', () => {
     jest.spyOn(comparePasswordPortStub, 'compare').mockResolvedValueOnce(false);
     const promise = sut.execute(params);
     await expect(promise).rejects.toThrow(AuthenticationError);
+  });
+
+  it('should call TokenProviderPort with correct values', async () => {
+    const { sut, tokenProviderPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    const tokenProviderSpy = jest.spyOn(tokenProviderPortStub, 'generateToken');
+    await sut.execute(params);
+    expect(tokenProviderSpy).toHaveBeenCalledWith({
+      id: 'any_id',
+      name: 'John Doe',
+      email: 'any_email@example.com',
+      role: 'EMPLOYEE',
+      isActive: true,
+    });
   });
 });
