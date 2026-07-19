@@ -17,6 +17,10 @@ export class LoginUseCase {
       throw new AuthenticationError();
     }
 
+    if (!user.isActive) {
+      throw new AuthenticationError();
+    }
+
     return { token: 'valid_token' };
   }
 }
