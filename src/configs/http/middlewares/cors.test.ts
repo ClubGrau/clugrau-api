@@ -14,6 +14,6 @@ describe('Cors Middleware', () => {
       .expect(200)
       .expect('Access-Control-Allow-Origin', '*')
       .expect('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-      .expect('Access-Control-Allow-Headers', 'Content-Type');
+      .expect('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   });
 });
