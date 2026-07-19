@@ -63,4 +63,24 @@ describe('LoginUsecase', () => {
     const promise = sut.execute(params);
     await expect(promise).rejects.toThrow(AuthenticationError);
   });
+
+  it('should throw AuthenticationError when user is not active', async () => {
+    const { sut, findAuthenticatableByEmailPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    jest
+      .spyOn(findAuthenticatableByEmailPortStub, 'findAuthenticatableByEmail')
+      .mockResolvedValueOnce({
+        id: 'any_id',
+        name: 'John Doe',
+        email: 'any_email@example.com',
+        passwordHash: 'hashed_password',
+        isActive: false,
+        role: 'EMPLOYEE',
+      });
+    const promise = sut.execute(params);
+    await expect(promise).rejects.toThrow(AuthenticationError);
+  });
 });
