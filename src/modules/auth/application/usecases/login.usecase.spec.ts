@@ -161,4 +161,32 @@ describe('LoginUsecase', () => {
     const token = await sut.execute(params);
     expect(token).toEqual({ token: 'any_token' });
   });
+
+  it('should throw if CompareHashPort throws', async () => {
+    const { sut, comparePasswordPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    jest
+      .spyOn(comparePasswordPortStub, 'compare')
+      .mockRejectedValueOnce(new Error('CompareHashPort error'));
+    await expect(sut.execute(params)).rejects.toThrow('CompareHashPort error');
+  });
+
+  it('should throw if TokenProviderPort throws', async () => {
+    const { sut, tokenProviderPortStub } = makeSut();
+    const params = {
+      email: 'any_email@example.com',
+      password: 'any_password',
+    };
+    jest
+      .spyOn(tokenProviderPortStub, 'generateToken')
+      .mockImplementationOnce(() => {
+        throw new Error('TokenProviderPort error');
+      });
+    await expect(sut.execute(params)).rejects.toThrow(
+      'TokenProviderPort error',
+    );
+  });
 });
