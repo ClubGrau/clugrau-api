@@ -14,13 +14,16 @@ export function makeApp({ connection }: MakeAppDeps): Express {
   middlewares(app);
 
   const bcryptAdapter = new BcryptAdapter();
-  const employees = makeEmployeesModule({
-    connection,
-    encrypter: bcryptAdapter,
-  });
+
   const auth = makeAuthModule({
     connection,
     compareHash: bcryptAdapter,
+  });
+
+  const employees = makeEmployeesModule({
+    connection,
+    encrypter: bcryptAdapter,
+    authTokenMiddleware: auth.authTokenMiddleware,
   });
 
   app.use('/employee', employees.router);

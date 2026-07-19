@@ -7,6 +7,6 @@ export const cors = (
 ): void => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 };
