@@ -1,8 +1,8 @@
 import {
   GetEmployeesDto,
-  GetEmployeesItemDto,
+  GetEmployeesResultDto,
 } from '../../dtos/get-employees.dto';
 
 export interface GetEmployeesPort {
-  execute(filters: GetEmployeesDto): Promise<GetEmployeesItemDto[]>;
+  execute(filters: GetEmployeesDto): Promise<GetEmployeesResultDto>;
 }

@@ -12,16 +12,22 @@ describe('GetEmployeesDto', () => {
     expect(dto).toBeDefined();
     expect(dto.isActive).toBeUndefined();
     expect(dto.role).toBeUndefined();
+    expect(dto.page).toBeUndefined();
+    expect(dto.limit).toBeUndefined();
   });
 
-  it('should describe optional list filters', () => {
+  it('should describe optional list filters and pagination', () => {
     const dto: GetEmployeesDto = {
       isActive: true,
       role: EmployeeModel.Role.MANAGER,
+      page: 2,
+      limit: 10,
     };
 
     expect(dto.isActive).toBe(true);
     expect(dto.role).toBe(EmployeeModel.Role.MANAGER);
+    expect(dto.page).toBe(2);
+    expect(dto.limit).toBe(10);
   });
 });
 
@@ -53,7 +59,7 @@ describe('GetEmployeesItemDto', () => {
 });
 
 describe('GetEmployeesResultDto', () => {
-  it('should describe a result carrying the employee list', () => {
+  it('should describe a paginated result carrying the employee list', () => {
     const createdAt = new Date('2024-01-01T00:00:00.000Z');
     const result: GetEmployeesResultDto = {
       employees: [
@@ -68,11 +74,19 @@ describe('GetEmployeesResultDto', () => {
           deactivateAt: null,
         },
       ],
+      page: 1,
+      limit: 20,
+      total: 1,
+      totalPages: 1,
     };
 
     expect(result.employees).toHaveLength(1);
     const [employee] = result.employees;
     expect(employee?.id).toBe('valid_employee_id');
     expect(employee).not.toHaveProperty('password');
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(20);
+    expect(result.total).toBe(1);
+    expect(result.totalPages).toBe(1);
   });
 });

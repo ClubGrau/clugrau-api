@@ -1,7 +1,8 @@
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
+import { PaginationInputDto } from '@shared/application/pagination/pagination.dto';
 
-/** Input do caso de uso GetEmployees (filtros opcionais da query). */
-export interface GetEmployeesDto {
+/** Input da query GetEmployees (filtros + paginação offset). */
+export interface GetEmployeesDto extends PaginationInputDto {
   isActive?: boolean;
   role?: EmployeeModel.Role;
 }
@@ -21,7 +22,25 @@ export interface GetEmployeesItemDto {
   deactivateAt: Date | null;
 }
 
-/** Output do caso de uso GetEmployees (saída da application). */
+/** Params do outbound port de leitura (já com skip/limit normalizados). */
+export interface FindEmployeesParams {
+  isActive?: boolean;
+  role?: EmployeeModel.Role;
+  skip: number;
+  limit: number;
+}
+
+/** Resultado bruto do repositório antes do envelope HTTP. */
+export interface FindEmployeesResult {
+  items: GetEmployeesItemDto[];
+  total: number;
+}
+
+/** Output da query GetEmployees (lista nomeada + meta de paginação). */
 export interface GetEmployeesResultDto {
   employees: GetEmployeesItemDto[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }

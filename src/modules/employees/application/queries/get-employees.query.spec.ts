@@ -1,5 +1,10 @@
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
 import {
+  DEFAULT_LIMIT,
+  DEFAULT_PAGE,
+} from '@shared/application/pagination/pagination.dto';
+import {
+  FindEmployeesResult,
   GetEmployeesDto,
   GetEmployeesItemDto,
 } from '../dtos/get-employees.dto';
@@ -20,14 +25,19 @@ const makeEmployeeItem = (
   ...overrides,
 });
 
-const makeStubs = () => {
-  const employees = [makeEmployeeItem()];
-  return {
-    findEmployeesStub: {
-      findAll: jest.fn().mockResolvedValue(employees),
-    } satisfies FindEmployeesPort,
-  };
-};
+const makeFindResult = (
+  overrides: Partial<FindEmployeesResult> = {},
+): FindEmployeesResult => ({
+  items: [makeEmployeeItem()],
+  total: 1,
+  ...overrides,
+});
+
+const makeStubs = () => ({
+  findEmployeesStub: {
+    findAll: jest.fn().mockResolvedValue(makeFindResult()),
+  } satisfies FindEmployeesPort,
+});
 
 const makeSut = (): SutTypes => {
   const { findEmployeesStub } = makeStubs();
@@ -60,32 +70,58 @@ describe('GetEmployeesQuery', () => {
     expect(sut.execute).toBeInstanceOf(Function);
   });
 
-  it('should call FindEmployeesPort.findAll with the received filters', async () => {
+  it('should call FindEmployeesPort.findAll with normalized pagination defaults', async () => {
+    const { sut, findEmployeesStub } = makeSut();
+    const findAllSpy = jest.spyOn(findEmployeesStub, 'findAll');
+
+    await sut.execute({});
+
+    expect(findAllSpy).toHaveBeenCalledWith({
+      isActive: undefined,
+      role: undefined,
+      skip: 0,
+      limit: DEFAULT_LIMIT,
+    });
+  });
+
+  it('should call FindEmployeesPort.findAll with filters and normalized page/limit', async () => {
     const { sut, findEmployeesStub } = makeSut();
     const filters: GetEmployeesDto = {
       isActive: true,
       role: EmployeeModel.Role.MANAGER,
+      page: 3,
+      limit: 10,
     };
     const findAllSpy = jest.spyOn(findEmployeesStub, 'findAll');
 
     await sut.execute(filters);
 
     expect(findAllSpy).toHaveBeenCalledTimes(1);
-    expect(findAllSpy).toHaveBeenCalledWith(filters);
+    expect(findAllSpy).toHaveBeenCalledWith({
+      isActive: true,
+      role: EmployeeModel.Role.MANAGER,
+      skip: 20,
+      limit: 10,
+    });
   });
 
-  it('should call FindEmployeesPort.findAll with an empty filter object', async () => {
+  it('should coerce string pagination from query params', async () => {
     const { sut, findEmployeesStub } = makeSut();
     const findAllSpy = jest.spyOn(findEmployeesStub, 'findAll');
 
-    await sut.execute({});
+    await sut.execute({ page: '2', limit: '15' });
 
-    expect(findAllSpy).toHaveBeenCalledWith({});
+    expect(findAllSpy).toHaveBeenCalledWith({
+      isActive: undefined,
+      role: undefined,
+      skip: 15,
+      limit: 15,
+    });
   });
 
-  it('should return the employees from FindEmployeesPort', async () => {
+  it('should return a paginated result from FindEmployeesPort', async () => {
     const { sut, findEmployeesStub } = makeSut();
-    const employees = [
+    const items = [
       makeEmployeeItem({ id: 'employee_1' }),
       makeEmployeeItem({
         id: 'employee_2',
@@ -94,23 +130,40 @@ describe('GetEmployeesQuery', () => {
         role: EmployeeModel.Role.MANAGER,
       }),
     ];
-    jest.spyOn(findEmployeesStub, 'findAll').mockResolvedValueOnce(employees);
+    jest.spyOn(findEmployeesStub, 'findAll').mockResolvedValueOnce({
+      items,
+      total: 42,
+    });
 
-    const result = await sut.execute({});
+    const result = await sut.execute({ page: 2, limit: 20 });
 
-    expect(result).toEqual(employees);
-    expect(result).toHaveLength(2);
-    expect(result[0]).not.toHaveProperty('password');
-    expect(result[1]).not.toHaveProperty('password');
+    expect(result).toEqual({
+      employees: items,
+      page: 2,
+      limit: 20,
+      total: 42,
+      totalPages: 3,
+    });
+    expect(result.employees[0]).not.toHaveProperty('password');
+    expect(result.employees[1]).not.toHaveProperty('password');
   });
 
-  it('should return an empty list when FindEmployeesPort finds nothing', async () => {
+  it('should return an empty paginated list when FindEmployeesPort finds nothing', async () => {
     const { sut, findEmployeesStub } = makeSut();
-    jest.spyOn(findEmployeesStub, 'findAll').mockResolvedValueOnce([]);
+    jest.spyOn(findEmployeesStub, 'findAll').mockResolvedValueOnce({
+      items: [],
+      total: 0,
+    });
 
     const result = await sut.execute({});
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({
+      employees: [],
+      page: DEFAULT_PAGE,
+      limit: DEFAULT_LIMIT,
+      total: 0,
+      totalPages: 0,
+    });
   });
 
   it('should propagate errors from FindEmployeesPort', async () => {
