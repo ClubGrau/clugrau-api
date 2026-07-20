@@ -1,6 +1,7 @@
 import {
   GetEmployeesDto,
   GetEmployeesItemDto,
+  GetEmployeesResultDto,
 } from '@modules/employees/application/dtos/get-employees.dto';
 import { GetEmployeesPort } from '@modules/employees/application/ports/inbound/get-employees.port';
 import { EmployeeModel } from '@modules/employees/domain/models/employee.model';
@@ -20,9 +21,20 @@ const makeEmployeeItem = (
   ...overrides,
 });
 
+const makePaginatedResult = (
+  overrides: Partial<GetEmployeesResultDto> = {},
+): GetEmployeesResultDto => ({
+  employees: [makeEmployeeItem()],
+  page: 1,
+  limit: 20,
+  total: 1,
+  totalPages: 1,
+  ...overrides,
+});
+
 const makeStubs = () => ({
   getEmployeesStub: {
-    execute: jest.fn().mockResolvedValue([makeEmployeeItem()]),
+    execute: jest.fn().mockResolvedValue(makePaginatedResult()),
   } satisfies GetEmployeesPort,
 });
 
@@ -44,11 +56,13 @@ describe('GetEmployeesController', () => {
     expect(sut).toBeInstanceOf(GetEmployeesController);
   });
 
-  it('should call GetEmployeesPort with correct values', async () => {
+  it('should call GetEmployeesPort with filters and pagination', async () => {
     const { sut, getEmployeesStub } = makeSut();
     const request: GetEmployeesDto = {
       isActive: true,
       role: EmployeeModel.Role.MANAGER,
+      page: 2,
+      limit: 10,
     };
     const getEmployeesSpy = jest.spyOn(getEmployeesStub, 'execute');
 
@@ -66,6 +80,8 @@ describe('GetEmployeesController', () => {
     expect(getEmployeesSpy).toHaveBeenCalledWith({
       isActive: undefined,
       role: undefined,
+      page: undefined,
+      limit: undefined,
     });
   });
 
@@ -84,30 +100,37 @@ describe('GetEmployeesController', () => {
     expect(getEmployeesSpy).toHaveBeenCalledWith({
       isActive: undefined,
       role: undefined,
+      page: undefined,
+      limit: undefined,
     });
   });
 
-  it('should return 200 with employees when GetEmployeesPort succeeds', async () => {
+  it('should return 200 with paginated employees when GetEmployeesPort succeeds', async () => {
     const { sut } = makeSut();
-    const employees = [makeEmployeeItem()];
+    const result = makePaginatedResult();
 
     const response = await sut.handle({});
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
-      data: { employees },
+      data: result,
     });
   });
 
-  it('should return 200 with an empty list when no employees are found', async () => {
+  it('should return 200 with an empty paginated list when no employees are found', async () => {
     const { sut, getEmployeesStub } = makeSut();
-    jest.spyOn(getEmployeesStub, 'execute').mockResolvedValueOnce([]);
+    const emptyResult = makePaginatedResult({
+      employees: [],
+      total: 0,
+      totalPages: 0,
+    });
+    jest.spyOn(getEmployeesStub, 'execute').mockResolvedValueOnce(emptyResult);
 
     const response = await sut.handle({});
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
-      data: { employees: [] },
+      data: emptyResult,
     });
   });
 });

@@ -1,7 +1,7 @@
 import { CreateEmployeeResultDto } from '@modules/employees/application/dtos/create-employee.dto';
 import {
-  GetEmployeesDto,
-  GetEmployeesItemDto,
+  FindEmployeesParams,
+  FindEmployeesResult,
 } from '@modules/employees/application/dtos/get-employees.dto';
 import { CreateEmployeeRepositoryPort } from '@modules/employees/application/ports/outbound/create-employee-repository.port';
 import { FindEmployeesPort } from '@modules/employees/application/ports/outbound/find-employees.port';
@@ -39,17 +39,32 @@ export class EmployeeMongooseRepository
     return mapEmployeeDocument(employee as EmployeeDocument);
   }
 
-  async findAll(filters: GetEmployeesDto): Promise<GetEmployeesItemDto[]> {
-    const query: GetEmployeesDto = {};
+  async findAll(params: FindEmployeesParams): Promise<FindEmployeesResult> {
+    const filter: {
+      isActive?: boolean;
+      role?: EmployeeModel.Role;
+    } = {};
 
-    if (filters.isActive !== undefined) {
-      query.isActive = filters.isActive;
+    if (params.isActive !== undefined) {
+      filter.isActive = params.isActive;
     }
-    if (filters.role !== undefined) {
-      query.role = filters.role;
+    if (params.role !== undefined) {
+      filter.role = params.role;
     }
 
-    const employees = await this.employeeModel.find(query).lean();
-    return (employees as EmployeeDocument[]).map(mapEmployeeReadModel);
+    const [documents, total] = await Promise.all([
+      this.employeeModel
+        .find(filter)
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(params.skip)
+        .limit(params.limit)
+        .lean(),
+      this.employeeModel.countDocuments(filter),
+    ]);
+
+    return {
+      items: (documents as EmployeeDocument[]).map(mapEmployeeReadModel),
+      total,
+    };
   }
 }
