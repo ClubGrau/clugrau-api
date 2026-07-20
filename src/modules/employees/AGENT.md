@@ -37,8 +37,8 @@ After a meaningful change, update the relevant section(s) in place. Keep history
 
 | Capability | Status | Entry point |
 |------------|--------|-------------|
-| Create employee (command) | Done | `POST /employee` |
-| List employees (query) | Done | `GET /employee` |
+| List employees (query) | Done | `GET /api/employees` |
+| Create employee (command) | Done | `POST /api/employee` |
 | Email uniqueness policy | Done | `EmployeePoliciesService.ensureEmailIsAvailable` |
 | Password confirmation | Done | `CreateEmployeeUsecase` |
 | Password hashing | Done | `EncrypterPort` → `BcryptAdapter` (injected from `app.ts`) |
@@ -65,7 +65,7 @@ Queries do **not** call `Employee.create`, policies, or encrypter. They use a de
 - Phone validation (see TODO in `CreateEmployeeUsecase`)
 - Explicit reactivation flow for inactive employees with the same email
 - Cross-module events / integration beyond this hexagon
-- Coerce query-string filters (`isActive=true` arrives as string via `adaptRoute`)
+- Coerce remaining query-string filters (`isActive=true` arrives as string via `adaptRoute`; `page`/`limit` already handled by shared pagination)
 
 ---
 
@@ -154,8 +154,8 @@ Related outside the module:
 
 | Path | Role |
 |------|------|
-| `src/app.ts` | Injects `connection` + `BcryptAdapter` + `authTokenMiddleware`, mounts `/employee` |
-| `src/shared/**` | Entity base, VOs, EncrypterPort, BaseController, adaptRoute |
+| `src/app.ts` | Injects `connection` + `BcryptAdapter` + `authTokenMiddleware`, mounts `/api` |
+| `src/shared/**` | Entity base, VOs, EncrypterPort, BaseController, adaptRoute, **offset pagination** |
 | `src/client/employee.http` | Manual REST Client requests |
 | `docs/project-structure.md` | Repo-wide hexagonal structure (PT) |
 
@@ -312,26 +312,29 @@ interface CreateEmployeeResultDto {
 
 ## Application: Get Employees (query)
 
+Offset pagination lives in `@shared/application/pagination` (`normalizePagination`, `toPaginatedResult`). Module DTOs compose that contract.
+
 ### Ports
 
 ```ts
 // inbound
 interface GetEmployeesPort {
-  execute(filters: GetEmployeesDto): Promise<GetEmployeesItemDto[]>;
+  execute(filters: GetEmployeesDto): Promise<GetEmployeesResultDto>;
 }
 
 // outbound
 interface FindEmployeesPort {
-  findAll(filters: GetEmployeesDto): Promise<GetEmployeesItemDto[]>;
+  findAll(params: FindEmployeesParams): Promise<FindEmployeesResult>;
 }
 ```
 
 ### DTOs
 
 ```ts
-interface GetEmployeesDto {
+interface GetEmployeesDto extends PaginationInputDto {
   isActive?: boolean;
   role?: EmployeeModel.Role;
+  // page?: number | string; limit?: number | string; (from shared)
 }
 
 interface GetEmployeesItemDto {
@@ -345,17 +348,34 @@ interface GetEmployeesItemDto {
   deactivateAt: Date | null;
 }
 
+interface FindEmployeesParams {
+  isActive?: boolean;
+  role?: EmployeeModel.Role;
+  skip: number;
+  limit: number;
+}
+
+interface FindEmployeesResult {
+  items: GetEmployeesItemDto[];
+  total: number;
+}
+
 interface GetEmployeesResultDto {
   employees: GetEmployeesItemDto[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 ```
 
-`GetEmployeesResultDto` is the HTTP success payload shape (`{ employees }`). The inbound port returns the array; the controller wraps it.
+Defaults: `page=1`, `limit=20`, `max limit=100` (shared).
 
 ### Query flow (`GetEmployeesQuery`)
 
-1. Call `FindEmployeesPort.findAll(filters)`
-2. Return `GetEmployeesItemDto[]`
+1. `normalizePagination(filters)` → `{ page, limit, skip }`
+2. `FindEmployeesPort.findAll({ filters, skip, limit })` → `{ items, total }`
+3. Map via `toPaginatedResult` into `{ employees, page, limit, total, totalPages }`
 
 No domain entity creation, no policies, no encrypter.
 
@@ -377,23 +397,23 @@ No domain entity creation, no policies, no encrypter.
 `GetEmployeesController` extends `BaseController`:
 
 - No required fields
-- Forwards optional filters: `isActive`, `role`
-- Success → `200` + `{ data: { employees } }` via `ok(...)`
+- Forwards optional filters + pagination: `isActive`, `role`, `page`, `limit`
+- Success → `200` + `{ data: { employees, page, limit, total, totalPages } }` via `ok(...)`
 - Unexpected errors → `serverError(...)`
 
 ### Routes
 
 ```ts
 // employee.routes.ts
-router.get('/', authTokenMiddleware, adaptRoute(getEmployeesController));
-router.post('/', authTokenMiddleware, adaptRoute(createEmployeeController));
+router.get('/employees', authTokenMiddleware, adaptRoute(getEmployeesController));
+router.post('/employee', authTokenMiddleware, adaptRoute(createEmployeeController));
 ```
 
 Mounted in `app.ts` as:
 
 ```text
-GET  /employee
-POST /employee
+GET  /api/employees
+POST /api/employee
 ```
 
 Both require `Authorization` (Bearer token). Manual samples: `src/client/employee.http`.
@@ -424,8 +444,9 @@ Client
   → GetEmployeesController.handle
   → GetEmployeesPort.execute
   → GetEmployeesQuery
-      → FindEmployeesPort.findAll
-  → 200 { data: { employees: [...] } }
+      → normalizePagination
+      → FindEmployeesPort.findAll ({ skip, limit, filters })
+  → 200 { data: { employees, page, limit, total, totalPages } }
 ```
 
 ---
@@ -444,7 +465,9 @@ Client
 
 - `CreateEmployeeRepositoryPort` → `create`
 - `FindEmployeeByEmailPort` → `findByEmail` (lean + `mapEmployeeDocument`)
-- `FindEmployeesPort` → `findAll` (lean + `mapEmployeeReadModel`; optional `isActive` / `role` filters)
+- `FindEmployeesPort` → `findAll` (`find` + `sort` + `skip` + `limit` + `countDocuments` + `mapEmployeeReadModel`)
+
+`findAll` sorts by `{ createdAt: -1, _id: -1 }` for stable pages.
 
 ### Mapper rules
 
@@ -543,7 +566,7 @@ Never shortcut by calling the repository from the controller.
 3. **Authorization** — routes require a valid token; role-based authorization (who may create/list) is not implemented yet.
 4. **NIF in HTTP create** — supported on DTO/entity; controller currently does not forward `nif` from the request (gap to close if NIF is required at API boundary).
 5. **Error HTTP mapping** — controller maps most failures through `serverError`; finer-grained domain → HTTP status mapping may be introduced later without moving that logic into domain.
-6. **Query-string filter coercion** — `adaptRoute` merges `req.query` as strings; `isActive=true` is not coerced to boolean yet. Filters work cleanly when passed as typed values (e.g. tests); HTTP query params may need parsing in the controller later.
+6. **Query-string filter coercion** — `page` / `limit` are coerced in `normalizePagination` (accepts string). `isActive=true` from query string is still a string until coerced in the controller if needed.
 
 ---
 
@@ -563,4 +586,5 @@ Never shortcut by calling the repository from the controller.
 | Mongo I/O | `infrastructure/outbound/persistence/employee-mongoose.repository.ts` |
 | Document ↔ DTO mapping | `infrastructure/outbound/persistence/employee.mapper.ts` |
 | DI | `employees.module.ts` |
-| App mount | `src/app.ts` → `app.use('/employee', employees.router)` |
+| App mount | `src/app.ts` → `app.use('/api', employees.router)` |
+| Offset pagination (shared) | `src/shared/application/pagination/pagination.dto.ts` |

@@ -17,6 +17,10 @@ Authorization: Bearer {{token}}
 GET http://localhost:3003/api/employees
 Authorization: Bearer {{token}}
 
-### List employees (optional filters)
-GET http://localhost:3003/api/employees?isActive=true&role=EMPLOYEE
+### List employees (pagination)
+GET http://localhost:3003/api/employees?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### List employees (filters + pagination)
+GET http://localhost:3003/api/employees?isActive=true&role=EMPLOYEE&page=2&limit=10
 Authorization: Bearer {{token}}

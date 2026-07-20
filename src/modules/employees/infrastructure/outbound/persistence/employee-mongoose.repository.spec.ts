@@ -128,7 +128,7 @@ describe('EmployeeMongooseRepository', () => {
   });
 
   describe('findAll', () => {
-    it('should find employees with an empty filter query', async () => {
+    it('should find employees with pagination and return items plus total', async () => {
       const { sut, employeeModelMock } = makeSut();
       const employeeId = new mongoose.Types.ObjectId().toHexString();
       const lean = jest.fn().mockResolvedValueOnce([
@@ -144,56 +144,81 @@ describe('EmployeeMongooseRepository', () => {
           deactivateAt: null,
         },
       ]);
+      const limit = jest.fn().mockReturnValueOnce({ lean });
+      const skip = jest.fn().mockReturnValueOnce({ limit });
+      const sort = jest.fn().mockReturnValueOnce({ skip });
       const findSpy = jest
         .spyOn(employeeModelMock, 'find')
-        .mockReturnValueOnce({ lean });
+        .mockReturnValueOnce({ sort });
+      const countSpy = jest
+        .spyOn(employeeModelMock, 'countDocuments')
+        .mockResolvedValueOnce(45);
 
-      const result = await sut.findAll({});
+      const result = await sut.findAll({ skip: 20, limit: 10 });
 
       expect(findSpy).toHaveBeenCalledWith({});
-      expect(lean).toHaveBeenCalledTimes(1);
-      expect(result).toEqual([
-        {
-          id: employeeId,
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          role: EmployeeModel.Role.ADMIN,
-          nif: '123456789',
-          isActive: true,
-          createdAt: new Date('2024-01-01T00:00:00Z'),
-          deactivateAt: null,
-        },
-      ]);
-      expect(result[0]).not.toHaveProperty('password');
+      expect(sort).toHaveBeenCalledWith({ createdAt: -1, _id: -1 });
+      expect(skip).toHaveBeenCalledWith(20);
+      expect(limit).toHaveBeenCalledWith(10);
+      expect(countSpy).toHaveBeenCalledWith({});
+      expect(result).toEqual({
+        items: [
+          {
+            id: employeeId,
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            role: EmployeeModel.Role.ADMIN,
+            nif: '123456789',
+            isActive: true,
+            createdAt: new Date('2024-01-01T00:00:00Z'),
+            deactivateAt: null,
+          },
+        ],
+        total: 45,
+      });
+      expect(result.items[0]).not.toHaveProperty('password');
     });
 
     it('should apply isActive and role filters when provided', async () => {
       const { sut, employeeModelMock } = makeSut();
       const lean = jest.fn().mockResolvedValueOnce([]);
+      const limit = jest.fn().mockReturnValueOnce({ lean });
+      const skip = jest.fn().mockReturnValueOnce({ limit });
+      const sort = jest.fn().mockReturnValueOnce({ skip });
       const findSpy = jest
         .spyOn(employeeModelMock, 'find')
-        .mockReturnValueOnce({ lean });
+        .mockReturnValueOnce({ sort });
+      const countSpy = jest
+        .spyOn(employeeModelMock, 'countDocuments')
+        .mockResolvedValueOnce(0);
 
       await sut.findAll({
         isActive: true,
         role: EmployeeModel.Role.MANAGER,
+        skip: 0,
+        limit: 20,
       });
 
-      expect(findSpy).toHaveBeenCalledWith({
+      const expectedFilter = {
         isActive: true,
         role: EmployeeModel.Role.MANAGER,
-      });
+      };
+      expect(findSpy).toHaveBeenCalledWith(expectedFilter);
+      expect(countSpy).toHaveBeenCalledWith(expectedFilter);
     });
 
     it('should return an empty list when no employees are found', async () => {
       const { sut, employeeModelMock } = makeSut();
-      jest.spyOn(employeeModelMock, 'find').mockReturnValueOnce({
-        lean: jest.fn().mockResolvedValueOnce([]),
-      });
+      const lean = jest.fn().mockResolvedValueOnce([]);
+      const limit = jest.fn().mockReturnValueOnce({ lean });
+      const skip = jest.fn().mockReturnValueOnce({ limit });
+      const sort = jest.fn().mockReturnValueOnce({ skip });
+      jest.spyOn(employeeModelMock, 'find').mockReturnValueOnce({ sort });
+      jest.spyOn(employeeModelMock, 'countDocuments').mockResolvedValueOnce(0);
 
-      const result = await sut.findAll({});
+      const result = await sut.findAll({ skip: 0, limit: 20 });
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ items: [], total: 0 });
     });
   });
 });

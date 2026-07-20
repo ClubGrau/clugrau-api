@@ -26,12 +26,14 @@ export class GetEmployeesController extends BaseController<
     HttpResponse<HttpErrorBody | HttpSuccessBody<GetEmployeesResultDto>>
   > {
     try {
-      const employees = await this.getEmployees.execute({
+      const result = await this.getEmployees.execute({
         isActive: request.isActive,
         role: request.role,
+        page: request.page,
+        limit: request.limit,
       });
 
-      return ok({ employees });
+      return ok(result);
     } catch (error) {
       return serverError(error as Error);
     }
